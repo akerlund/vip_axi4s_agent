@@ -1,0 +1,36 @@
+CAPI=2:
+name: "akerlund::vip_axi4s_agent_example_py:0"
+description: "AXI4-Stream agent example - pyUVM/cocotb flow (Verilator)"
+
+filesets:
+  tb:
+    files:
+      - tb/tb_axi4s_vip_top.sv
+    file_type: systemVerilogSource
+
+targets:
+  default: &default
+    flow: sim
+    flow_options:
+      tool: verilator
+    filesets:
+      - tb
+    toplevel: tb_axi4s_vip_top
+
+  lint:
+    <<: *default
+    flow: lint
+    flow_options:
+      tool: verilator
+      verilator_options:
+        - -Wno-fatal
+
+  sim:
+    <<: *default
+    flow_options:
+      tool: verilator
+      cocotb_module: axi4s_tc_top
+      mode: cc
+      verilator_options:
+        - -Wno-fatal
+        - --public-flat-rw

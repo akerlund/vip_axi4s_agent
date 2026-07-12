@@ -1,0 +1,56 @@
+CAPI=2:
+name: "akerlund::vip_axi4s_agent_example:0"
+description: "AXI4-Stream agent example testbench"
+
+filesets:
+  rtl:
+    files:
+      - rtl/dummy.sv
+    file_type: systemVerilogSource
+
+  tb:
+    files:
+      # Compilation unit: entry point compiled directly by the simulator
+      - tb/tb.svh
+      # Include files: accessed via +incdir+ (included by the .svh or tb packages)
+      - tb/axi4s_tb_pkg.sv: {is_include_file: true}
+      - tb/axi4s_scoreboard.sv: {is_include_file: true}
+      - tb/axi4s_virtual_sequencer.sv: {is_include_file: true}
+      - tb/axi4s_env.sv: {is_include_file: true}
+      - tb/axi4s_tb_top.sv: {is_include_file: true}
+      - tc/axi4s_tc_pkg.sv: {is_include_file: true}
+      - tc/axi4s_base_test.sv: {is_include_file: true}
+      - tc/tc_axi4s_demonstration.sv: {is_include_file: true}
+      - tc/tc_axi4s_backpressure.sv: {is_include_file: true}
+    file_type: systemVerilogSource
+    depend:
+      - "akerlund::vip_axi4s_agent:0"
+      - "akerlund::vip_clk_rst_agent:0"
+      - "akerlund::vip_report_server:0"
+
+targets:
+  default:
+    toplevel: axi4s_tb_top
+    filesets:
+      - rtl
+      - tb
+    tools:
+      vcs:
+        vcs_options:
+          - -ntb_opts
+          - uvm-1.2
+        run_options:
+          - +UVM_TESTNAME=tc_axi4s_demonstration
+
+  stress:
+    toplevel: axi4s_tb_top
+    filesets:
+      - rtl
+      - tb
+    tools:
+      vcs:
+        vcs_options:
+          - -ntb_opts
+          - uvm-1.2
+        run_options:
+          - +UVM_TESTNAME=tc_axi4s_backpressure

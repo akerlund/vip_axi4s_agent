@@ -1,0 +1,4 @@
+/.tools/
+/build/
+/results.xml
+__pycache__/
