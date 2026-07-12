@@ -13,7 +13,7 @@ and a reset-aware agent wrapper.
 
 The SV agent depends on [`vip_gauss`](https://github.com/akerlund/vip_gauss)
 (Gaussian-distributed delays); the Python port only uses it optionally, at
-runtime, if it's importable. [`examples/`](examples/README.md) additionally
+runtime, if it's importable. [`testbench/`](testbench/README.md) additionally
 depends on [`vip_clk_rst_agent`](https://github.com/akerlund/vip_clk_rst_agent)
 and [`vip_report_server`](https://github.com/akerlund/vip_report_server)
 (SV only). All three are checked out as git submodules under
