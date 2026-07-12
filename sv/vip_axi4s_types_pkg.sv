@@ -28,6 +28,11 @@
 
 package vip_axi4s_types_pkg;
 
+  typedef enum bit {
+    FALSE,
+    TRUE
+  } bool_t;
+
   typedef enum {
     VIP_AXI4S_MASTER_AGENT_E,
     VIP_AXI4S_SLAVE_AGENT_E

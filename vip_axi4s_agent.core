@@ -21,7 +21,6 @@ filesets:
       - sv/vip_axi4s_agent.sv: {is_include_file: true}
     file_type: systemVerilogSource
     depend:
-      - "akerlund::vip_bool:0"
       - "akerlund::vip_gauss:1.0.0"
 
 targets:
