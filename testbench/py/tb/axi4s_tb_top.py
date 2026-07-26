@@ -1,5 +1,5 @@
 ################################################################################
-# cocotb entry point for the AXI4-Stream pyUVM example.
+# cocotb testbench top for the AXI4-Stream pyUVM example.
 ################################################################################
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ from cocotb.triggers import RisingEdge
 from pyuvm import ConfigDB, uvm_root
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
+_PY_ROOT = os.path.dirname(_HERE)
 
 
 def _find_vip_root(start):
@@ -35,13 +36,13 @@ _COMPONENT_PYS = [
   os.path.join(_ROOT, "py"),
   os.path.join(_ROOT, "submodules", "vip_gauss", "py"),
 ]
-_LOCAL_PYS = [os.path.join(_HERE, "tb"), os.path.join(_HERE, "tc")]
+_LOCAL_PYS = [_HERE, os.path.join(_PY_ROOT, "tc")]
 for p in _COMPONENT_PYS + _LOCAL_PYS:
   if os.path.isdir(p) and p not in sys.path:
     sys.path.insert(0, p)
   elif not os.path.isdir(p):
     raise RuntimeError(
-      f"axi4s_tc_top: expected source dir not found: {p}\n"
+      f"axi4s_tb_top: expected source dir not found: {p}\n"
       f"  (VIP root resolved to {_ROOT}; set $VIP_ROOT to override)")
 
 from vip_axi4s_if import Axi4sBus                         # noqa: E402
@@ -71,11 +72,11 @@ async def _run(dut, test_name):
   await uvm_root().run_test(test_name, keep_set={ConfigDB})
 
 
-@cocotb.test(timeout_time=5, timeout_unit="ms")
+@cocotb.test(name="tc_axi4s_demonstration", timeout_time=5, timeout_unit="ms")
 async def tb_demonstration(dut):
   await _run(dut, "tc_axi4s_demonstration")
 
 
-@cocotb.test(timeout_time=10, timeout_unit="ms")
+@cocotb.test(name="tc_axi4s_backpressure", timeout_time=10, timeout_unit="ms")
 async def tb_backpressure(dut):
   await _run(dut, "tc_axi4s_backpressure")

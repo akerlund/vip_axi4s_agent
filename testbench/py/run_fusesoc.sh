@@ -24,7 +24,7 @@ if [ -x "$HOME/.local/verilator/bin/verilator" ]; then
 fi
 
 export VIP_ROOT
-export PYTHONPATH="${SCRIPT_DIR}${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH="${SCRIPT_DIR}/tb:${SCRIPT_DIR}${PYTHONPATH:+:$PYTHONPATH}"
 
 if [ "${DEBUG_RUN_FUSESOC:-0}" = "1" ]; then
   echo "Using PATH=${PATH}"

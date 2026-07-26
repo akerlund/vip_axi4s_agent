@@ -5,7 +5,7 @@ description: "AXI4-Stream agent example - pyUVM/cocotb flow (Verilator)"
 filesets:
   tb:
     files:
-      - tb/tb_axi4s_vip_top.sv
+      - tb/axi4s_hdl_top.sv
     file_type: systemVerilogSource
 
 targets:
@@ -15,7 +15,7 @@ targets:
       tool: verilator
     filesets:
       - tb
-    toplevel: tb_axi4s_vip_top
+    toplevel: axi4s_hdl_top
 
   lint:
     <<: *default
@@ -29,7 +29,7 @@ targets:
     <<: *default
     flow_options:
       tool: verilator
-      cocotb_module: axi4s_tc_top
+      cocotb_module: axi4s_tb_top
       mode: cc
       verilator_options:
         - -Wno-fatal

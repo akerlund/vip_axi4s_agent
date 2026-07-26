@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Pure AXI4-Stream VIP loopback top for cocotb/pyUVM.
+// AXI4-Stream HDL shell for the cocotb/pyUVM loopback testbench.
 //
 // No RTL DUT is instantiated. The Python master agent drives TVALID and payload
 // signals, the Python slave agent drives TREADY, and both monitors observe the
@@ -11,7 +11,7 @@
 
 `default_nettype none
 
-module tb_axi4s_vip_top #(
+module axi4s_hdl_top #(
     parameter int TDATA_BYTES = 4,
     parameter int TDATA_W     = 8 * TDATA_BYTES,
     parameter int TSTRB_W     = TDATA_BYTES,
