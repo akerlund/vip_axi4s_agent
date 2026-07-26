@@ -73,10 +73,10 @@ async def _run(dut, test_name):
 
 
 @cocotb.test(name="tc_axi4s_demonstration", timeout_time=5, timeout_unit="ms")
-async def tb_demonstration(dut):
+async def tc_axi4s_demonstration(dut):
   await _run(dut, "tc_axi4s_demonstration")
 
 
 @cocotb.test(name="tc_axi4s_backpressure", timeout_time=10, timeout_unit="ms")
-async def tb_backpressure(dut):
+async def tc_axi4s_backpressure(dut):
   await _run(dut, "tc_axi4s_backpressure")
