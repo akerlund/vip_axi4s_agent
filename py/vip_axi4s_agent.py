@@ -44,6 +44,7 @@ class vip_axi4s_agent(uvm_agent):
       self.driver = vip_axi4s_driver("driver", self)
       self.driver.agent_owned = True
       self.sequencer = vip_axi4s_sequencer("sequencer", self)
+      self.driver.sequencer = self.sequencer
 
   def _publish_to_children(self):
     for key, value in (("vif", self.vif), ("cfg", self.cfg), ("cfg_t", self.cfg_t)):
@@ -52,9 +53,11 @@ class vip_axi4s_agent(uvm_agent):
   def connect_phase(self):
     if self.cfg.is_active == "UVM_ACTIVE":
       self.driver.seq_item_port.connect(self.sequencer.seq_item_export)
+      self.monitor.packet_start_cb = self.sequencer.notify_packet_start
 
   async def run_phase(self):
     self._reset_driver_vif()
+    cocotb.start_soon(self.monitor.check_reset_protocol())
     while True:
       while self.vif.get_rst() == 0:
         await self.vif.rising()

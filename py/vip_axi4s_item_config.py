@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from vip_axi4s_types_pkg import (
   Axi4sTidType, Axi4sTdataType, Axi4sTuserType, Axi4sTdestType,
-  Axi4sTstrbType,
+  Axi4sTstrbType, Axi4sTkeepType, Axi4sTvalidDelayRef,
 )
 
 
@@ -16,13 +16,16 @@ class vip_axi4s_item_config:
     self.name = name
     self.axi4s_tdata_type = Axi4sTdataType.COUNTER
     self.axi4s_tstrb_type = Axi4sTstrbType.ALL
+    self.axi4s_tkeep_type = Axi4sTkeepType.ALL
     self.axi4s_tid_type = Axi4sTidType.COUNTER
     self.axi4s_tdest_type = Axi4sTdestType.INCR
     self.axi4s_tuser_type = Axi4sTuserType.ZEROS
+    self.reference_event_for_tvalid_delay = Axi4sTvalidDelayRef.PREV_TVALID
     self.tdata_counter = 0
     self.tid_counter = 0
     self.tdest_counter = 0
     self.tuser_counter = 0
+    self.custom_tdest = 0
     self.min_tid = 0
     self.max_tid = 0
     self.min_tdest = 0

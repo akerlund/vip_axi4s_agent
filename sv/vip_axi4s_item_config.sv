@@ -27,13 +27,17 @@ class vip_axi4s_item_config extends uvm_object;
 
   vip_axi4s_tdata_type_t axi4s_tdata_type = VIP_AXI4S_TDATA_COUNTER_E;
   vip_axi4s_tstrb_t      axi4s_tstrb_type = VIP_AXI4S_TSTRB_ALL_E;
+  vip_axi4s_tkeep_t      axi4s_tkeep_type = VIP_AXI4S_TKEEP_ALL_E;
   vip_axi4s_tid_type_t   axi4s_tid_type   = VIP_AXI4S_TID_COUNTER_E;
   vip_axi4s_tdest_type_t axi4s_tdest_type = VIP_AXI4S_TDEST_INCR_E;
   vip_axi4s_tuser_type_t axi4s_tuser_type = VIP_AXI4S_TUSER_ZEROS_E;
+  vip_axi4s_tvalid_delay_ref_t reference_event_for_tvalid_delay =
+    VIP_AXI4S_TVALID_DELAY_PREV_TVALID_E;
   longint                tdata_counter    = 0;
   longint                tid_counter      = 0;
   longint                tdest_counter    = 0;
   longint                tuser_counter    = 0;
+  longint                custom_tdest     = 0;
 
   int min_tid          = 0;
   int max_tid          = 0;
@@ -45,13 +49,16 @@ class vip_axi4s_item_config extends uvm_object;
   `uvm_object_utils_begin(vip_axi4s_item_config);
     `uvm_field_enum(vip_axi4s_tdata_type_t, axi4s_tdata_type, UVM_ALL_ON)
     `uvm_field_enum(vip_axi4s_tstrb_t,      axi4s_tstrb_type, UVM_ALL_ON)
+    `uvm_field_enum(vip_axi4s_tkeep_t,      axi4s_tkeep_type, UVM_ALL_ON)
     `uvm_field_enum(vip_axi4s_tid_type_t,   axi4s_tid_type,   UVM_ALL_ON)
     `uvm_field_enum(vip_axi4s_tdest_type_t, axi4s_tdest_type, UVM_ALL_ON)
     `uvm_field_enum(vip_axi4s_tuser_type_t, axi4s_tuser_type, UVM_ALL_ON)
+    `uvm_field_enum(vip_axi4s_tvalid_delay_ref_t, reference_event_for_tvalid_delay, UVM_ALL_ON)
     `uvm_field_int(tdata_counter,                             UVM_ALL_ON | UVM_DEC)
     `uvm_field_int(tid_counter,                               UVM_ALL_ON | UVM_DEC)
     `uvm_field_int(tdest_counter,                             UVM_ALL_ON | UVM_DEC)
     `uvm_field_int(tuser_counter,                             UVM_ALL_ON | UVM_DEC)
+    `uvm_field_int(custom_tdest,                              UVM_ALL_ON | UVM_DEC)
     `uvm_field_int(min_tid,                                   UVM_ALL_ON | UVM_DEC)
     `uvm_field_int(max_tid,                                   UVM_ALL_ON | UVM_DEC)
     `uvm_field_int(min_tdest,                                 UVM_ALL_ON | UVM_DEC)

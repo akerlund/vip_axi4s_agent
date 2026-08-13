@@ -62,7 +62,19 @@ class Axi4sBus:
 
   def get_or(self, name, default=0):
     h = self.sig.get(name)
-    return int(h.value) if h is not None else default
+    if h is None:
+      return default
+    try:
+      return int(h.value)
+    except (TypeError, ValueError):
+      return default
+
+  def is_unknown(self, name):
+    h = self.sig.get(name)
+    if h is None:
+      return False
+    value_s = str(h.value).lower()
+    return "x" in value_s or "z" in value_s
 
   async def rising(self):
     await RisingEdge(self.clk)

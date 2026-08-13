@@ -45,6 +45,11 @@ class vip_axi4s_item #(
   rand logic [TDEST_WIDTH_C-1 : 0] tdest     = '0;
   rand logic [TUSER_WIDTH_C-1 : 0] tuser [];
   rand int                         burst_length;
+  int unsigned                     tvalid_delay [];
+  int unsigned                     tready_delay [];
+  vip_axi4s_stream_xact_type_t     stream_xact_type = VIP_AXI4S_CONTINUOUS_ALIGNED_STREAM_E;
+  vip_axi4s_tvalid_delay_ref_t     reference_event_for_tvalid_delay =
+    VIP_AXI4S_TVALID_DELAY_PREV_TVALID_E;
 
 
   `uvm_object_param_utils_begin(vip_axi4s_item #(CFG_P))
@@ -55,16 +60,24 @@ class vip_axi4s_item #(
     `uvm_field_sarray_int(tkeep, UVM_DEFAULT)
     `uvm_field_sarray_int(tuser, UVM_DEFAULT)
     `uvm_field_int(burst_length, UVM_DEFAULT)
+    `uvm_field_sarray_int(tvalid_delay, UVM_DEFAULT)
+    `uvm_field_sarray_int(tready_delay, UVM_DEFAULT)
+    `uvm_field_enum(vip_axi4s_stream_xact_type_t, stream_xact_type, UVM_DEFAULT)
+    `uvm_field_enum(vip_axi4s_tvalid_delay_ref_t, reference_event_for_tvalid_delay, UVM_DEFAULT)
   `uvm_object_utils_end
 
   protected vip_axi4s_item_config       _cfg;
   protected logic [TDATA_WIDTH_C-1 : 0] _tdata [$];
+  protected logic [TKEEP_WIDTH_C-1 : 0] _tkeep [$];
   protected logic [TUSER_WIDTH_C-1 : 0] _tuser [$];
+  protected int unsigned                _tvalid_delay [$];
+  protected int unsigned                _tready_delay [$];
 
   // ---------------------------------------------------------------------------
   //
   // ---------------------------------------------------------------------------
   function new(string name = "vip_axi4s_item");
+
     super.new(name);
   endfunction
 
@@ -80,6 +93,7 @@ class vip_axi4s_item #(
   //
   // ---------------------------------------------------------------------------
   function void set_config(ref vip_axi4s_item_config cfg);
+
     _cfg = cfg;
   endfunction
 
@@ -89,6 +103,7 @@ class vip_axi4s_item #(
   function void set_tdata_counter(
     input logic [TDATA_WIDTH_C-1 : 0] tdata_counter
   );
+
     _cfg.tdata_counter = tdata_counter;
   endfunction
 
@@ -98,6 +113,7 @@ class vip_axi4s_item #(
   function void set_tuser_counter(
     input logic [TUSER_WIDTH_C-1 : 0] tuser_counter
   );
+
     _cfg.tuser_counter = tuser_counter;
   endfunction
 
@@ -107,7 +123,36 @@ class vip_axi4s_item #(
   function void set_tdata(
     input logic [TDATA_WIDTH_C-1 : 0] tdata [$]
   );
+
     _tdata = tdata;
+  endfunction
+
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  function void set_tkeep(
+    input logic [TKEEP_WIDTH_C-1 : 0] tkeep [$]
+  );
+
+    _tkeep = tkeep;
+  endfunction
+
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  function void set_tvalid_delay(input int unsigned tvalid_delay [$]);
+
+    _tvalid_delay = tvalid_delay;
+    this.copy_timing_queue_to_array(_tvalid_delay, this.tvalid_delay);
+  endfunction
+
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  function void set_tready_delay(input int unsigned tready_delay [$]);
+
+    _tready_delay = tready_delay;
+    this.copy_timing_queue_to_array(_tready_delay, this.tready_delay);
   endfunction
 
   // ---------------------------------------------------------------------------
@@ -116,6 +161,7 @@ class vip_axi4s_item #(
   function void set_tuser(
     input logic [TUSER_WIDTH_C-1 : 0] tuser [$]
   );
+
     _tuser = tuser;
   endfunction
 
@@ -151,6 +197,32 @@ class vip_axi4s_item #(
       _cfg.max_burst_length = _tdata.size();
     end
 
+    // Custom TKEEP defines the transferred packet shape
+    if (_cfg.axi4s_tkeep_type == VIP_AXI4S_TKEEP_CUSTOM_E) begin
+
+      if (_tkeep.size() == 0) begin
+
+        `uvm_fatal(get_name(), "tkeep has size 0")
+      end
+
+      foreach (_tkeep[i]) begin
+        if (_tkeep[i] == '0) begin
+
+          `uvm_fatal(get_name(), $sformatf("tkeep[%0d] must not be zero", i))
+        end
+      end
+
+      if ((_cfg.axi4s_tdata_type == VIP_AXI4S_TDATA_CUSTOM_E) && (_tkeep.size() != _tdata.size())) begin
+
+        `uvm_fatal(get_name(), $sformatf(
+        "tkeep has size %0d but tdata has size %0d",
+        _tkeep.size(), _tdata.size()))
+      end
+
+      _cfg.min_burst_length = _tkeep.size();
+      _cfg.max_burst_length = _tkeep.size();
+    end
+
     if (_cfg.axi4s_tuser_type == VIP_AXI4S_TUSER_CUSTOM_E) begin
 
       if (_tuser.size() == 0) begin
@@ -165,12 +237,34 @@ class vip_axi4s_item #(
         _tuser.size(), _cfg.max_burst_length))
       end
     end
+
+    if (_tvalid_delay.size() != 0) begin
+      this.constrain_burst_length_from_array_size("tvalid_delay", _tvalid_delay.size());
+    end
+
+    if (_tready_delay.size() != 0) begin
+      this.constrain_burst_length_from_array_size("tready_delay", _tready_delay.size());
+    end
   endfunction
 
   // ---------------------------------------------------------------------------
   //
   // ---------------------------------------------------------------------------
   function void post_randomize();
+
+    reference_event_for_tvalid_delay = _cfg.reference_event_for_tvalid_delay;
+
+    if (_tvalid_delay.size() != 0) begin
+      this.copy_timing_queue_to_array(_tvalid_delay, tvalid_delay);
+    end else begin
+      tvalid_delay.delete();
+    end
+
+    if (_tready_delay.size() != 0) begin
+      this.copy_timing_queue_to_array(_tready_delay, tready_delay);
+    end else begin
+      tready_delay.delete();
+    end
 
     // Increase TDATA counter
     if (_cfg.axi4s_tdata_type == VIP_AXI4S_TDATA_COUNTER_E) begin
@@ -194,6 +288,108 @@ class vip_axi4s_item #(
     if (_cfg.axi4s_tuser_type == VIP_AXI4S_TUSER_COUNTER_E) begin
 
       _cfg.tuser_counter += burst_length;
+    end
+
+    this.infer_stream_xact_type();
+  endfunction
+
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  protected function void constrain_burst_length_from_array_size(
+    input string name,
+    input int    size
+  );
+
+    if (size == 0) begin
+
+      `uvm_fatal(get_name(), $sformatf("%s has size 0", name))
+    end
+
+    if ((_cfg.min_burst_length == _cfg.max_burst_length) && (_cfg.min_burst_length != size)) begin
+
+      `uvm_fatal(get_name(), $sformatf(
+        "%s has size %0d but burst length is constrained to %0d",
+        name,
+        size,
+        _cfg.min_burst_length
+      ))
+    end
+
+    _cfg.min_burst_length = size;
+    _cfg.max_burst_length = size;
+  endfunction
+
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  protected function void copy_timing_queue_to_array(
+    input int unsigned timing_q [$],
+    ref   int unsigned timing_array []
+  );
+
+    timing_array = new[timing_q.size()];
+    foreach (timing_q[i]) begin
+      timing_array[i] = timing_q[i];
+    end
+  endfunction
+
+  // ---------------------------------------------------------------------------
+  //
+  // ---------------------------------------------------------------------------
+  function void infer_stream_xact_type();
+
+    bit has_null_byte;
+    bit has_position_byte;
+    bit has_one_data_byte_per_beat;
+    bit has_all_data_bytes;
+    int data_byte_count;
+
+    has_null_byte              = 1'b0;
+    has_position_byte          = 1'b0;
+    has_one_data_byte_per_beat = 1'b1;
+    has_all_data_bytes         = 1'b1;
+
+    foreach (tkeep[i]) begin
+
+      data_byte_count = 0;
+      if (tkeep[i] != '1) begin
+        has_null_byte = 1'b1;
+      end
+      if (tstrb[i] != tkeep[i]) begin
+        has_position_byte = 1'b1;
+      end
+      if ((tkeep[i] != '1) || (tstrb[i] != '1)) begin
+        has_all_data_bytes = 1'b0;
+      end
+      for (int lane = 0; lane < TSTRB_WIDTH_C; lane++) begin
+        if (tkeep[i][lane] && tstrb[i][lane]) begin
+          data_byte_count++;
+        end
+      end
+      if (data_byte_count != 1) begin
+        has_one_data_byte_per_beat = 1'b0;
+      end
+    end
+
+    if ((_cfg != null) && (_cfg.axi4s_tkeep_type == VIP_AXI4S_TKEEP_CUSTOM_E)) begin
+      stream_xact_type = VIP_AXI4S_USER_STREAM_E;
+    end else if (has_one_data_byte_per_beat) begin
+      stream_xact_type = VIP_AXI4S_BYTE_STREAM_E;
+    end else if (has_all_data_bytes) begin
+      stream_xact_type = VIP_AXI4S_CONTINUOUS_ALIGNED_STREAM_E;
+    end else if (has_position_byte) begin
+
+      // A position byte (TKEEP high, TSTRB low) is what makes a stream sparse,
+      // and it takes precedence when null bytes are present as well
+      stream_xact_type = VIP_AXI4S_SPARSE_STREAM_E;
+    end else if (has_null_byte) begin
+
+      // Only null bytes (TKEEP low): the data bytes are not aligned to the
+      // full data bus width
+      stream_xact_type = VIP_AXI4S_CONTINUOUS_UNALIGNED_STREAM_E;
+    end else begin
+      stream_xact_type = VIP_AXI4S_USER_STREAM_E;
     end
   endfunction
 
@@ -236,18 +432,36 @@ class vip_axi4s_item #(
   constraint con_tstrb_val {
     if (_cfg.axi4s_tstrb_type == VIP_AXI4S_TSTRB_ALL_E) {
       foreach (tstrb[i]) {
-        tstrb[i] == '1;
+        tstrb[i] == tkeep[i];
       }
     } else {
       foreach (tstrb[i]) {
-        tstrb[i] != 0;
+        tstrb[i] != '0;
+        (tstrb[i] & ~tkeep[i]) == '0;
       }
     }
   }
 
   constraint con_tkeep_val {
-    foreach (tkeep[i]) {
-      tkeep[i] == '1;
+    if (_cfg.axi4s_tkeep_type == VIP_AXI4S_TKEEP_ALL_E) {
+      foreach (tkeep[i]) {
+        tkeep[i] == '1;
+      }
+    } else if (_cfg.axi4s_tkeep_type == VIP_AXI4S_TKEEP_CUSTOM_E) {
+      foreach (tkeep[i]) {
+        tkeep[i] == _tkeep[i];
+      }
+    } else if (_cfg.axi4s_tkeep_type == VIP_AXI4S_TKEEP_SPARSE_E) {
+      foreach (tkeep[i]) {
+        tkeep[i] != '0;
+        if (TKEEP_WIDTH_C > 1) {
+          tkeep[i] != '1;
+        }
+      }
+    } else {
+      foreach (tkeep[i]) {
+        tkeep[i] != '0;
+      }
     }
   }
 
@@ -267,9 +481,11 @@ class vip_axi4s_item #(
       tdest == '0;
     } else if (_cfg.axi4s_tdest_type == VIP_AXI4S_TDEST_INCR_E) {
       tdest == _cfg.tdest_counter;
-    } else {
+    } else if (_cfg.axi4s_tdest_type == VIP_AXI4S_TDEST_RANDOM_E) {
       tdest >= _cfg.min_tdest;
       tdest <= _cfg.max_tdest;
+    } else {
+      tdest == _cfg.custom_tdest;
     }
   }
 

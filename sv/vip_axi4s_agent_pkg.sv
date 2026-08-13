@@ -37,6 +37,7 @@ package vip_axi4s_agent_pkg;
   `include "vip_axi4s_item_config.sv"
   `include "vip_axi4s_item.sv"
   `include "vip_axi4s_config.sv"
+  `include "vip_axi4s_callbacks.sv"
   `include "vip_axi4s_monitor.sv"
   `include "vip_axi4s_sequencer.sv"
   `include "vip_axi4s_seq_lib.sv"
