@@ -34,9 +34,29 @@ module axi4s_tb_top;
   vip_axi4s_if #(VIP_AXI4S_CFG_C) mst_vif(clk_rst_vif.clk, clk_rst_vif.rst_n);
   vip_axi4s_if #(VIP_AXI4S_CFG_C) slv_vif(clk_rst_vif.clk, clk_rst_vif.rst_n);
 
+  bit zero_unqualified_bytes;
+
+  function automatic logic [VIP_AXI4S_TDATA_BYTES_C*8-1:0] zero_unqualified_tdata(
+    input logic [VIP_AXI4S_TDATA_BYTES_C*8-1:0] tdata,
+    input logic [VIP_AXI4S_TDATA_BYTES_C-1:0]   tstrb,
+    input logic [VIP_AXI4S_TDATA_BYTES_C-1:0]   tkeep
+  );
+    logic [VIP_AXI4S_TDATA_BYTES_C*8-1:0] result;
+
+    result = tdata;
+    for (int lane = 0; lane < VIP_AXI4S_TDATA_BYTES_C; lane++) begin
+      if (!(tkeep[lane] && tstrb[lane])) begin
+        result[8*lane +: 8] = '0;
+      end
+    end
+    return result;
+  endfunction
+
   assign slv_vif.tvalid = mst_vif.tvalid;
   assign mst_vif.tready = slv_vif.tready;
-  assign slv_vif.tdata  = mst_vif.tdata;
+  assign slv_vif.tdata  = zero_unqualified_bytes ?
+                          zero_unqualified_tdata(mst_vif.tdata, mst_vif.tstrb, mst_vif.tkeep) :
+                          mst_vif.tdata;
   assign slv_vif.tstrb  = mst_vif.tstrb;
   assign slv_vif.tkeep  = mst_vif.tkeep;
   assign slv_vif.tlast  = mst_vif.tlast;
@@ -45,6 +65,7 @@ module axi4s_tb_top;
   assign slv_vif.tuser  = mst_vif.tuser;
 
   initial begin
+    zero_unqualified_bytes = $test$plusargs("ZERO_UNQUALIFIED_BYTES");
     uvm_config_db #(virtual clk_rst_if)::set(uvm_root::get(),                      "uvm_test_top.tb_env*",                "vif", clk_rst_vif);
     uvm_config_db #(virtual clk_rst_if)::set(uvm_root::get(),                      "uvm_test_top.tb_env.clk_rst_agent0*", "vif", clk_rst_vif);
     uvm_config_db #(virtual vip_axi4s_if #(VIP_AXI4S_CFG_C))::set(uvm_root::get(), "uvm_test_top.tb_env.mst_agent0*",     "vif", mst_vif);

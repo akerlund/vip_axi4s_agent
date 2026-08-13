@@ -47,6 +47,10 @@ class axi4s_base_test(uvm_test):
   def mst_sequencer(self):
     return self.env.mst_agent0.sequencer
 
+  @property
+  def slv_sequencer(self):
+    return self.env.slv_agent0.sequencer
+
   async def clk_delay(self, n):
     bus = ConfigDB().get(self, "", "vif")
     for _ in range(n):
