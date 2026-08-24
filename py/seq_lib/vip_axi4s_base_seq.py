@@ -10,7 +10,7 @@ from vip_axi4s_item import vip_axi4s_item
 from vip_axi4s_item_config import vip_axi4s_item_config
 from vip_axi4s_types_pkg import (
   Axi4sCfgT, Axi4sTidType, Axi4sTdataType, Axi4sTuserType, Axi4sTdestType,
-  Axi4sTstrbType,
+  Axi4sTstrbType, Axi4sTkeepType, Axi4sTvalidDelayRef,
 )
 
 
@@ -27,7 +27,10 @@ class vip_axi4s_base_seq(uvm_sequence):
     self._cfg.max_burst_length = 256
     self._nr_of_bursts = 1
     self._tdata = []
+    self._tkeep = []
     self._tuser = []
+    self._tvalid_delay = []
+    self._tready_delay = []
 
   def set_verbose(self, verbose):
     self._verbose = bool(verbose)
@@ -46,11 +49,28 @@ class vip_axi4s_base_seq(uvm_sequence):
   def set_tdest_type(self, axi4s_tdest_type: Axi4sTdestType):
     self._cfg.axi4s_tdest_type = axi4s_tdest_type
 
+  def set_tdest_custom(self, tdest):
+    self._cfg.axi4s_tdest_type = Axi4sTdestType.CUSTOM
+    self._cfg.custom_tdest = int(tdest)
+
   def set_tuser_type(self, axi4s_tuser_type: Axi4sTuserType):
     self._cfg.axi4s_tuser_type = axi4s_tuser_type
 
   def set_tdata(self, tdata):
     self._tdata = [int(v) for v in tdata]
+
+  def set_tkeep(self, tkeep):
+    self._tkeep = [int(v) for v in tkeep]
+
+  def set_tvalid_delay(self, tvalid_delay):
+    self._tvalid_delay = [int(v) for v in tvalid_delay]
+
+  def set_tready_delay(self, tready_delay):
+    self._tready_delay = [int(v) for v in tready_delay]
+
+  def set_reference_event_for_tvalid_delay(
+      self, reference_event_for_tvalid_delay: Axi4sTvalidDelayRef):
+    self._cfg.reference_event_for_tvalid_delay = reference_event_for_tvalid_delay
 
   def set_tuser(self, tuser):
     self._tuser = [int(v) for v in tuser]
@@ -82,6 +102,9 @@ class vip_axi4s_base_seq(uvm_sequence):
   def set_tstrb_type(self, axi4s_tstrb_type: Axi4sTstrbType):
     self._cfg.axi4s_tstrb_type = axi4s_tstrb_type
 
+  def set_tkeep_type(self, axi4s_tkeep_type: Axi4sTkeepType):
+    self._cfg.axi4s_tkeep_type = axi4s_tkeep_type
+
   def set_cfg_tid(self, max_tid, min_tid):
     self._cfg.min_tid = int(min_tid)
     self._cfg.max_tid = int(max_tid)
@@ -100,6 +123,15 @@ class vip_axi4s_base_seq(uvm_sequence):
       if self._cfg.axi4s_tdata_type == Axi4sTdataType.CUSTOM:
         req.set_tdata(self._tdata)
         self.set_burst_length(len(self._tdata))
+      if self._cfg.axi4s_tkeep_type == Axi4sTkeepType.CUSTOM:
+        req.set_tkeep(self._tkeep)
+        self.set_burst_length(len(self._tkeep))
+      if self._tvalid_delay:
+        req.set_tvalid_delay(self._tvalid_delay)
+        self.set_burst_length(len(self._tvalid_delay))
+      if self._tready_delay:
+        req.set_tready_delay(self._tready_delay)
+        self.set_burst_length(len(self._tready_delay))
       if self._cfg.axi4s_tuser_type == Axi4sTuserType.CUSTOM:
         req.set_tuser(self._tuser)
       req.set_config(self._cfg)

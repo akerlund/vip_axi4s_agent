@@ -13,18 +13,23 @@ filesets:
       # Compilation unit: entry point compiled directly by the simulator
       - tb/tb.svh
       # Include files: accessed via +incdir+ (included by the .svh or tb packages)
-      - tb/axi4s_tb_pkg.sv: {is_include_file: true}
-      - tb/axi4s_scoreboard.sv: {is_include_file: true}
-      - tb/axi4s_virtual_sequencer.sv: {is_include_file: true}
-      - tb/axi4s_env.sv: {is_include_file: true}
-      - tb/axi4s_tb_top.sv: {is_include_file: true}
-      - tc/axi4s_tc_pkg.sv: {is_include_file: true}
-      - tc/axi4s_base_test.sv: {is_include_file: true}
-      - tc/tc_axi4s_demonstration.sv: {is_include_file: true}
-      - tc/tc_axi4s_backpressure.sv: {is_include_file: true}
+      - tb/axi4s_tb_pkg.sv:                   {is_include_file: true}
+      - tb/axi4s_scoreboard.sv:               {is_include_file: true}
+      - tb/axi4s_virtual_sequencer.sv:        {is_include_file: true}
+      - tb/axi4s_env.sv:                      {is_include_file: true}
+      - tb/axi4s_tb_top.sv:                   {is_include_file: true}
+      - tc/axi4s_tc_pkg.sv:                   {is_include_file: true}
+      - tc/axi4s_base_test.sv:                {is_include_file: true}
+      - tc/tc_axi4s_demonstration.sv:         {is_include_file: true}
+      - tc/tc_axi4s_backpressure.sv:          {is_include_file: true}
+      - tc/tc_axi4s_active_slave_response.sv: {is_include_file: true}
+      - tc/tc_axi4s_neg_checkers.sv:          {is_include_file: true}
+      - tc/tc_axi4s_sparse_qualifiers.sv:     {is_include_file: true}
+      - tc/tc_axi4s_optional_extras.sv:       {is_include_file: true}
+      - tc/tc_axi4s_random.sv:                {is_include_file: true}
     file_type: systemVerilogSource
     depend:
-      - "akerlund::vip_axi4s_agent:0"
+      - "akerlund::vip_axi4s_agent:1.0.0"
       - "akerlund::vip_clk_rst_agent:0"
       - "akerlund::vip_report_server:0"
 
@@ -39,6 +44,7 @@ targets:
         vcs_options:
           - -ntb_opts
           - uvm-1.2
+          - -licqueue
         run_options:
           - +UVM_TESTNAME=tc_axi4s_demonstration
 
@@ -52,5 +58,6 @@ targets:
         vcs_options:
           - -ntb_opts
           - uvm-1.2
+          - -licqueue
         run_options:
           - +UVM_TESTNAME=tc_axi4s_backpressure

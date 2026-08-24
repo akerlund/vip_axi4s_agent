@@ -41,7 +41,11 @@ class vip_axi4s_agent #(
   `uvm_component_utils_end
 
 
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
   function new(string name, uvm_component parent);
+
     super.new(name, parent);
   endfunction
 
@@ -65,7 +69,8 @@ class vip_axi4s_agent #(
       cfg = vip_axi4s_config::type_id::create({"default_config_", get_name()}, this);
     end
 
-    monitor = vip_axi4s_monitor #(CFG_P)::type_id::create({"vip_axi4s_monitor_", get_name()}, this);
+    monitor     = vip_axi4s_monitor #(CFG_P)::type_id::create({"vip_axi4s_monitor_", get_name()}, this);
+    monitor.cfg = cfg;
 
     if (cfg.is_active == UVM_ACTIVE) begin
 
@@ -73,6 +78,7 @@ class vip_axi4s_agent #(
       driver     = vip_axi4s_driver #(CFG_P)::type_id::create({"vip_axi4s_driver_", get_name()}, this);
       driver.cfg = cfg;
       sequencer  = vip_axi4s_sequencer #(CFG_P)::type_id::create({"vip_axi4s_sequencer_", get_name()}, this);
+      driver.sequencer = sequencer;
     end
   endfunction
 
@@ -84,6 +90,7 @@ class vip_axi4s_agent #(
     if (cfg.is_active == UVM_ACTIVE) begin
 
       driver.seq_item_port.connect(sequencer.seq_item_export);
+      monitor.packet_start_port.connect(sequencer.packet_start_export);
     end
   endfunction
 
@@ -108,7 +115,8 @@ class vip_axi4s_agent #(
   // ---------------------------------------------------------------------------
   function void handle_reset(uvm_phase phase);
 
-    monitor.handle_reset();
+    // The monitor resets itself from its own reset handling process, calling it
+    // from here as well would report a truncated packet twice
 
     if (cfg.is_active == UVM_ACTIVE) begin
 

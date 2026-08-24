@@ -31,7 +31,6 @@ package axi4s_tc_pkg;
   import axi4s_tb_pkg::*;
 
   // Import testbench and agent packages here
-  import bool_pkg::*;
   import report_server_pkg::*;
   import vip_axi4s_types_pkg::*;
   import vip_axi4s_agent_pkg::*;
@@ -42,5 +41,10 @@ package axi4s_tc_pkg;
   `include "axi4s_base_test.sv"
   `include "tc_axi4s_demonstration.sv"
   `include "tc_axi4s_backpressure.sv"
+  `include "tc_axi4s_active_slave_response.sv"
+  `include "tc_axi4s_neg_checkers.sv"
+  `include "tc_axi4s_sparse_qualifiers.sv"
+  `include "tc_axi4s_optional_extras.sv"
+  `include "tc_axi4s_random.sv"
 
 endpackage

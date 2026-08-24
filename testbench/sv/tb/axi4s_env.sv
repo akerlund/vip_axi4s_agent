@@ -83,6 +83,7 @@ class axi4s_env extends uvm_env;
     // Connect the Agents' sequencers to the virtual sequencer
     virtual_sequencer.clk_rst_sequencer0 = clk_rst_agent0.sequencer;
     virtual_sequencer.mst_sequencer      = mst_agent0.sequencer;
+    virtual_sequencer.slv_sequencer      = slv_agent0.sequencer;
 
   endfunction
 
