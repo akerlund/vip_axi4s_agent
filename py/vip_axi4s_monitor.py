@@ -42,7 +42,7 @@ class vip_axi4s_monitor(uvm_monitor):
     self.packet_start_cb = None
     self.callbacks = []
     self._packet_open = False
-    self._packet_start_open = False
+    self._packet_start_open_keys = set()
     self._packet_tid = 0
     self._packet_tdest = 0
     self._open_packets = {}
@@ -92,11 +92,11 @@ class vip_axi4s_monitor(uvm_monitor):
     while True:
       await self.vif.falling()
       await ReadOnly()
-      if (self.vif.get_rst() == 1 and self.vif.get_or("tvalid") == 1 and
-          not self._packet_start_open):
-        self._notify_packet_start(
-          self.vif.get_or("tid"),
-          self.vif.get_or("tdest"))
+      if self.vif.get_rst() == 1 and self.vif.get_or("tvalid") == 1:
+        tid = self.vif.get_or("tid")
+        tdest = self.vif.get_or("tdest")
+        if not self._packet_start_is_open(tid, tdest):
+          self._notify_packet_start(tid, tdest)
 
   def add_callback(self, cb):
     self.callbacks.append(cb)
@@ -132,7 +132,7 @@ class vip_axi4s_monitor(uvm_monitor):
           self.cfg.record_coverage_reset_during_packet()
 
     self._packet_open = False
-    self._packet_start_open = False
+    self._packet_start_open_keys.clear()
     self._packet_tid = 0
     self._packet_tdest = 0
     self._open_packets = {}
@@ -235,7 +235,7 @@ class vip_axi4s_monitor(uvm_monitor):
           self._trace_packet(item, stall_cycles, packet_latency, reset_seen=False)
 
           self._packet_open = False
-          self._packet_start_open = False
+          self._close_packet_start(self.vif.get_or("tid"), self.vif.get_or("tdest"))
           self._packet_tid = 0
           self._packet_tdest = 0
           self.tdata_port.write(item)
@@ -244,13 +244,21 @@ class vip_axi4s_monitor(uvm_monitor):
       self._update_tvalid_delay_tracking()
 
   def _notify_packet_start(self, tid, tdest):
-    self._packet_start_open = True
+    self._packet_start_open_keys.add(self._stream_key(tid, tdest))
     if self.packet_start_cb is None:
       return
     packet_start_item = vip_axi4s_item("packet_start_item", self.cfg_t)
     packet_start_item.tid = tid
     packet_start_item.tdest = tdest
     self.packet_start_cb(packet_start_item)
+
+  def _packet_start_is_open(self, tid, tdest):
+    if self._interleaving_allowed():
+      return self._stream_key(tid, tdest) in self._packet_start_open_keys
+    return bool(self._packet_start_open_keys)
+
+  def _close_packet_start(self, tid, tdest):
+    self._packet_start_open_keys.discard(self._stream_key(tid, tdest))
 
   def _interleaving_allowed(self):
     return self.cfg is not None and self.cfg.stream_interleave_depth > 1

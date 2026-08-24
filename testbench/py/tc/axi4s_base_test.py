@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from cocotb.triggers import RisingEdge
+from cocotb.triggers import RisingEdge, Timer
 
 from pyuvm import ConfigDB, uvm_test
 
@@ -55,6 +55,7 @@ class axi4s_base_test(uvm_test):
     bus = ConfigDB().get(self, "", "vif")
     for _ in range(n):
       await RisingEdge(bus.clk)
+      await Timer(1, unit="step")
 
   async def wait_for_compared(self, expected, timeout=20000):
     for _ in range(timeout):

@@ -425,14 +425,54 @@ class tc_axi4s_interleaved_streams extends axi4s_neg_base_test;
 
   `uvm_component_utils(tc_axi4s_interleaved_streams)
 
+  uvm_tlm_analysis_fifo #(vip_axi4s_item #(VIP_AXI4S_CFG_C)) packet_start_fifo;
+
   function new(string name = "tc_axi4s_interleaved_streams", uvm_component parent = null);
     super.new(name, parent);
   endfunction
 
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
+    packet_start_fifo = new("packet_start_fifo", this);
     axi4s_mst_cfg0.stream_interleave_depth = 2;
     axi4s_slv_cfg0.stream_interleave_depth = 2;
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    tb_env.mst_agent0.monitor.packet_start_port.connect(packet_start_fifo.analysis_export);
+  endfunction
+
+  function void expect_packet_start(input int unsigned exp_tid, input int unsigned exp_tdest);
+    vip_axi4s_item #(VIP_AXI4S_CFG_C) start_item;
+
+    if (!packet_start_fifo.try_get(start_item)) begin
+      `uvm_error(get_name(), $sformatf(
+        "Expected packet start tid=0x%0h tdest=0x%0h but no start was announced",
+        exp_tid,
+        exp_tdest
+      ))
+    end else if ((start_item.tid != exp_tid) || (start_item.tdest != exp_tdest)) begin
+      `uvm_error(get_name(), $sformatf(
+        "Expected packet start tid=0x%0h tdest=0x%0h, got tid=0x%0h tdest=0x%0h",
+        exp_tid,
+        exp_tdest,
+        start_item.tid,
+        start_item.tdest
+      ))
+    end
+  endfunction
+
+  function void expect_no_extra_packet_start();
+    vip_axi4s_item #(VIP_AXI4S_CFG_C) start_item;
+
+    if (packet_start_fifo.try_get(start_item)) begin
+      `uvm_error(get_name(), $sformatf(
+        "Unexpected extra packet start tid=0x%0h tdest=0x%0h",
+        start_item.tid,
+        start_item.tdest
+      ))
+    end
   endfunction
 
   task run_negative_body();
@@ -443,6 +483,9 @@ class tc_axi4s_interleaved_streams extends axi4s_neg_base_test;
     this.park_bus();
     this.clk_delay(2);
 
+    this.expect_packet_start(1, 0);
+    this.expect_packet_start(2, 0);
+    this.expect_no_extra_packet_start();
     this.expect_no_violation(VIP_AXI4S_CHECK_TID_OR_TDEST_CHANGE_BEFORE_TLAST_E);
     this.expect_no_violation(VIP_AXI4S_CHECK_STREAM_INTERLEAVE_DEPTH_EXCEEDED_E);
     this.expect_no_violation(VIP_AXI4S_CHECK_PACKET_TRUNCATED_BY_RESET_E);

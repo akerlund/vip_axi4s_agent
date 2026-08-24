@@ -86,7 +86,7 @@ cocotb tests from [`testbench/py`](testbench/py) with
 | Reset during packet | `tc_axi4s_neg_reset` / `tc_axi4s_neg_reset` |
 | Two independent observed streams | `tc_axi4s_neg_stream_tracking` / `tc_axi4s_neg_stream_tracking` |
 | Optional trace/performance/idle/fast-path controls | `tc_axi4s_optional_extras` / `tc_axi4s_optional_extras` |
-| Legal interleaving raises no stream violations | `tc_axi4s_interleaved_streams` / `tc_axi4s_interleaved_streams` |
+| Legal interleaving raises no stream violations and keeps packet-start notifications keyed by stream | `tc_axi4s_interleaved_streams` / `tc_axi4s_interleaved_streams` |
 | Back-to-back packets still announce a packet start | (covered by the random test) / `tc_axi4s_packet_start_back_to_back` |
 | Randomized soak run over several thousand clocks | `tc_axi4s_random` / `tc_axi4s_random` |
 

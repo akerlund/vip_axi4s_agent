@@ -289,6 +289,11 @@ class tc_axi4s_interleaved_streams(axi4s_neg_base_test):
     slv_cfg.stream_interleave_depth = 2
 
   async def run_negative_body(self):
+    starts = []
+    monitor = self.env.mst_agent0.monitor
+    monitor.packet_start_cb = lambda item: starts.append(
+      (int(item.tid), int(item.tdest)))
+
     await self.drive_beat(0x9999_0000, 0xf, 0xf, 0, 1, 3, 0, tready=1)
     await self.drive_beat(0xAAAA_0000, 0xf, 0xf, 0, 2, 4, 0, tready=1)
     await self.drive_beat(0xAAAA_0001, 0xf, 0xf, 1, 2, 4, 0, tready=1)
@@ -296,6 +301,8 @@ class tc_axi4s_interleaved_streams(axi4s_neg_base_test):
     self.park_bus()
     await self.clk_delay(2)
 
+    assert starts == [(1, 3), (2, 4)], (
+      f"Expected one packet start per interleaved stream, got {starts}")
     self.expect_no_violation(Axi4sCheck.TID_OR_TDEST_CHANGE_BEFORE_TLAST)
     self.expect_no_violation(Axi4sCheck.STREAM_INTERLEAVE_DEPTH_EXCEEDED)
     self.expect_no_violation(Axi4sCheck.PACKET_TRUNCATED_BY_RESET)

@@ -153,9 +153,9 @@ class vip_axi4s_monitor #(
 
   // Ingress data is saved per open {tid, tdest} stream in _open_packets
   protected bit                         _packet_open;
-  protected bit                         _packet_start_open;
   protected logic   [TID_WIDTH_C-1 : 0] _packet_tid;
   protected logic [TDEST_WIDTH_C-1 : 0] _packet_tdest;
+  protected bit                         _packet_start_open_by_stream[string];
   protected vip_axi4s_monitor_packet_state #(CFG_P) _open_packets[string];
   protected int unsigned                _pending_stall_cycles;
   protected int unsigned                _tvalid_delay_cycles;
@@ -300,12 +300,13 @@ class vip_axi4s_monitor #(
       // response contract needs
       @(negedge _vif.clk);
 
-      if ((_vif.rst_n === 1'b1) && (_vif.tvalid === 1'b1) && !_packet_start_open) begin
+      if ((_vif.rst_n === 1'b1) && (_vif.tvalid === 1'b1) &&
+          !this.packet_start_is_open(_vif.tid, _vif.tdest)) begin
 
         packet_start_item       = new("packet_start_item");
         packet_start_item.tid   = _vif.tid;
         packet_start_item.tdest = _vif.tdest;
-        _packet_start_open      = 1'b1;
+        _packet_start_open_by_stream[this.stream_key(_vif.tid, _vif.tdest)] = 1'b1;
         packet_start_port.write(packet_start_item);
       end
     end
@@ -344,8 +345,8 @@ class vip_axi4s_monitor #(
     end
 
     _open_packets.delete();
+    _packet_start_open_by_stream.delete();
     _packet_open = 1'b0;
-    _packet_start_open = 1'b0;
     _packet_tid  = '0;
     _packet_tdest = '0;
     _pending_stall_cycles = 0;
@@ -468,7 +469,7 @@ class vip_axi4s_monitor #(
           _open_packets.delete(key);
 
           _packet_open = 1'b0;
-          _packet_start_open = 1'b0;
+          this.close_packet_start(_vif.tid, _vif.tdest);
           _packet_tid  = '0;
           _packet_tdest = '0;
 
@@ -501,6 +502,30 @@ class vip_axi4s_monitor #(
   );
 
     return $sformatf("%0h:%0h", tid, tdest);
+  endfunction
+
+  // ---------------------------------------------------------------------------
+  // Packet-start notification state. With interleaving enabled, each stream
+  // needs its own announced/open state. Without interleaving, any announced
+  // packet suppresses further starts until the announced stream completes.
+  // ---------------------------------------------------------------------------
+  protected function bit packet_start_is_open(
+    input logic   [TID_WIDTH_C-1 : 0] tid,
+    input logic [TDEST_WIDTH_C-1 : 0] tdest
+  );
+
+    if (this.interleaving_allowed()) begin
+      return _packet_start_open_by_stream.exists(this.stream_key(tid, tdest));
+    end
+    return (_packet_start_open_by_stream.num() != 0);
+  endfunction
+
+  protected function void close_packet_start(
+    input logic   [TID_WIDTH_C-1 : 0] tid,
+    input logic [TDEST_WIDTH_C-1 : 0] tdest
+  );
+
+    _packet_start_open_by_stream.delete(this.stream_key(tid, tdest));
   endfunction
 
   // ---------------------------------------------------------------------------
