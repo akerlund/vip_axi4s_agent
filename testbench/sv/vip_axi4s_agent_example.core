@@ -29,7 +29,7 @@ filesets:
       - tc/tc_axi4s_random.sv:                {is_include_file: true}
     file_type: systemVerilogSource
     depend:
-      - "akerlund::vip_axi4s_agent:1.0.0"
+      - "akerlund::vip_axi4s_agent:1.0.1"
       - "akerlund::vip_clk_rst_agent:0"
       - "akerlund::vip_report_server:0"
 
