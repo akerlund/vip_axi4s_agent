@@ -1,5 +1,5 @@
 CAPI=2:
-name: "akerlund::vip_axi4s_agent:1.0.0"
+name: "akerlund::vip_axi4s_agent:1.0.1"
 description: "UVM AXI4-Stream verification agent"
 
 filesets:

@@ -70,6 +70,16 @@ class vip_axi4s_driver(uvm_driver):
         self.seq_item_port.item_done()
 
   async def drive_axi4s_item(self, req):
+    # Leave the timestep of whatever clock edge woke the sequence before
+    # driving anything. A write applied in the same timestep as a posedge
+    # lands after the simulator has evaluated that edge but before ReadOnly,
+    # so the DUT misses it while a monitor sampling at ReadOnly counts it --
+    # one phantom beat at the start of every packet, and an apparent latency
+    # one cycle longer than the DUT's. Every later beat is driven from the
+    # step after a handshake, which is already past the edge; this puts the
+    # first beat in the same position. It costs no clock cycle.
+    await Timer(1, unit="step")
+
     burst_length = len(req.tdata)
     tvalid_delay = self._build_tvalid_delays(req, burst_length)
     cycle_count = 0
